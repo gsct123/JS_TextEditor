@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green and White Page</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+        }
+
+        .green-side {
+            flex: 1;
+            background-color: green;
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title {
+            font-family: 'American Typewriter', sans-serif;
+            font-size: 25px;
+            font-weight: bold;
+            margin-bottom: 5px; /* Adjusted margin for spacing */
+            color: black; /* Added text color */
+        }
+
+        .subtitle {
+            font-family: 'American Typewriter', sans-serif;
+            font-size: 16px;
+            color: black; /* Added text color */
+        }
+
+        .white-side {
+            flex: 1;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .button {
+            height: 40px;
+            width: 150px;
+            font-size: 16px;
+            border: 2px solid;
+            margin: 10px;
+            cursor: pointer;
+        }
+        .modal {
+            display: none; /* Set the initial display style to none */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: #fff;
+            z-index: 1;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        } 
+        #registrationForm label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        #registrationForm input {
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+    
+    </style>
+</head>
+<body>
+    <div id="registerModal" class="modal" style="display: none;">
+        <span class="close" onclick="closeRegisterModal()">&times;</span>
+       
+        <form id="registrationForm">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="button" onclick="submitRegistration()">Submit</button>
+        </form>
+    </div>
+    <div class="green-side">
+        <div class="title">JavaScript Text Editor</div>
+        <div class="subtitle">Coursework 2</div>
+    </div>
+    <div class="white-side">
+        <button class="button" onclick="login()">Login</button>
+        <button class="button" onclick="openRegisterModal()">Register</button>
+        <button class="button" onclick="about()">About</button>
+    </div>
+    <script>
+
+        //localStorage.clear();
+        var users = JSON.parse(localStorage.getItem('users')) || [];
+
+        function openRegisterModal() {
+            document.getElementById('registerModal').style.display = 'block';
+        }
+
+        function closeRegisterModal() {
+            document.getElementById('registerModal').style.display = 'none';
+        }
+
+        function submitRegistration() {
+            var enteredUsername = document.getElementById('username').value;
+            var enteredPassword = document.getElementById('password').value;
+
+            // Check if the username is already taken
+            if (users.find(user => user.username === enteredUsername)) {
+                alert('Username already exists. Please choose another one.');
+                return;
+            }
+            // Register the user
+            users.push({ username: enteredUsername, password: enteredPassword });
+
+            // Save the updated users array to localStorage
+            localStorage.setItem('users', JSON.stringify(users));
+
+            alert('Registration successful!');
+            closeRegisterModal();
+        }
+                
+    
+    
+        function login() {
+            var enteredUsername = prompt('Enter your username:');
+            var enteredPassword = prompt('Enter your password:');
+        
+            var matchedUser = users.find(user => user.username === enteredUsername && user.password === enteredPassword);
+        
+            if (matchedUser) {
+                alert('Login successful!');
+                recentlyLoggedInUser = matchedUser;
+                localStorage.setItem('recentlyLoggedInUser', JSON.stringify(recentlyLoggedInUser));
+                window.location.href = 'editor2.html';
+            } else {
+                alert('Invalid username or password. Please try again.');
+            }
+        }
+        
+        function about() {
+            alert('This Text Editor was created with JavaScript and HTML'); 
+        }
+        
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Text Editor</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #editor {
+            flex: 1;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            padding: 10px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            border: 2px solid #ccc;
+        }
+
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px;
+            background-color: #f0f0f0;
+            border-top: 1px solid #ccc;
+        }
+        
+        h1 {
+            text-align: center;
+            background: Green;
+        }
+
+        button {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Your Editor, User!</h1>
+    <div id="controls">
+        <button onclick="logout()">Log out</button>
+        <button onclick="createFile()">Create File</button>
+        <button onclick="saveFile()">Save</button>
+        <button onclick="deleteFile()">Delete</button>
+        <button onclick="renameFile()">Rename File</button>
+        <select id="fileDropdown" onchange="loadFileContent()">
+            <option value="" disabled selected>Select a file</option>
+            <!-- Existing files will be added dynamically here -->
+        </select>
+        <select id="fontDropdown" onchange="changeFont()">
+            <option value="Courier New">Courier New</option>
+            <option value="Arial">Arial</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Georgia">Georgia</option>
+        </select>
+        <select id="colorDropdown" onchange="changeTextColor()">
+            <option value="black">Black</option>
+            <option value="red">Red</option>
+            <option value="green">Green</option>
+            <option value="blue">Blue</option>
+            <option value="purple">Purple</option>
+        </select>
+        <button onclick="applyStyle('bold')">Bold</button>
+        <button onclick="applyStyle('italic')">Italic</button>
+        <button onclick="applyStyle('underline')">Underline</button>
+    </div>
+    <div id="editor" contenteditable="true" oninput="updateFileContent()"></div>
+    <script>
+        // Load existing files from localStorage or initialize an empty array
+        var filesData = localStorage.getItem('files');
+        var files = (filesData && filesData !== 'undefined') ? JSON.parse(filesData) : [];
+
+        function updateFileDropdown() {
+            var fileDropdown = document.getElementById('fileDropdown');
+            fileDropdown.innerHTML = ''; // Clear existing options
+        
+            // Add the default option
+            var defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.text = 'Select a file';
+            defaultOption.disabled = true;
+            defaultOption.selected = true;
+            fileDropdown.add(defaultOption);
+        
+            // Get the recently logged-in user
+            var username = getRecentlyLoggedInUser();
+        
+            // Add each file belonging to the current user to the drop-down menu
+            files.filter(function (file) {
+                return file.username === username;
+            }).forEach(function (file) {
+                var option = document.createElement('option');
+                option.value = file.name; // Use the file name as the value
+                option.text = file.name;
+                fileDropdown.add(option);
+            });
+        }
+        // Initialize the drop-down menu
+        updateFileDropdown();
+        
+        function createFile() {
+            var fileName = prompt('Enter the new file name:');
+            if (fileName) {
+                var username = getRecentlyLoggedInUser();
+                var newFile = {
+                    name: fileName,
+                    content: '',
+                    username: username
+                };
+        
+                // Add the new file to the files array
+                files.push(newFile);
+        
+                // Save the updated files array to localStorage
+                localStorage.setItem('files', JSON.stringify(files));
+        
+                // Update the drop-down menu
+                updateFileDropdown();
+        
+                // Select the newly created file in the drop-down
+                document.getElementById('fileDropdown').value = fileName;
+        
+                // Load the content into the editor
+                loadFileContent();
+            }
+        }
+        
+
+        function loadFileContent() {
+            var selectedFileName = document.getElementById('fileDropdown').value;
+        
+            // Get the recently logged-in user
+            var username = getRecentlyLoggedInUser();
+        
+            // Find the selected file for the specific user
+            var selectedFile = files.find(function (file) {
+                return file.name === selectedFileName && file.username === username;
+            });
+        
+            // Set the editor content and font to the selected file's content and font
+            if (selectedFile) {
+                document.getElementById('editor').innerHTML = selectedFile.content;
+                document.getElementById('editor').style.fontFamily = selectedFile.font || 'Courier New';
+            }
+        }
+        
+
+        function saveFile() {
+            var selectedFileName = document.getElementById('fileDropdown').value;
+            var content = document.getElementById('editor').innerHTML;
+            var font = document.getElementById('editor').style.fontFamily;
+        
+            // Update the content and font of the selected file
+            var selectedFile = files.find(function (file) {
+                return file.name === selectedFileName;
+            });
+        
+            if (selectedFile) {
+                selectedFile.content = content;
+                selectedFile.font = font;
+        
+                // Save the updated files array to localStorage
+                localStorage.setItem('files', JSON.stringify(files));
+        
+                alert('File saved successfully!');
+            }
+        }
+
+        function deleteFile() {
+            var selectedFileName = document.getElementById('fileDropdown').value;
+
+            // Ask for confirmation before deleting the file
+            var confirmDelete = confirm('Are you sure you want to delete the file "' + selectedFileName + '"?');
+
+            if (confirmDelete) {
+                // Remove the file from the files array
+                files = files.filter(function (file) {
+                    return file.name !== selectedFileName;
+                });
+
+                // Save the updated files array to localStorage
+                localStorage.setItem('files', JSON.stringify(files));
+
+                // Update the drop-down menu
+                updateFileDropdown();
+
+                // Clear the editor content
+                document.getElementById('editor').innerHTML = '';
+
+                alert('File deleted successfully!');
+            } else {
+                alert('File deletion canceled.');
+            }
+        }
+
+
+        function updateFileContent() {
+            var selectedFileName = document.getElementById('fileDropdown').value;
+            var content = document.getElementById('editor').innerHTML;
+
+            // Update the content of the selected file
+            var selectedFile = files.find(function (file) {
+                return file.name === selectedFileName;
+            });
+
+            if (selectedFile) {
+                selectedFile.content = content;
+            }
+        }
+
+        function renameFile() {
+            var selectedFileName = document.getElementById('fileDropdown').value;
+            var newFileName = prompt('Enter the new name for the file:', selectedFileName);
+
+            if (newFileName && newFileName !== selectedFileName) {
+                // Find the selected file
+                var selectedFile = files.find(function (file) {
+                    return file.name === selectedFileName;
+                });
+
+                if (selectedFile) {
+                    // Update the file name
+                    selectedFile.name = newFileName;
+
+                    // Save the updated files array to localStorage
+                    localStorage.setItem('files', JSON.stringify(files));
+
+                    // Update the drop-down menu
+                    updateFileDropdown();
+
+                    // Select the renamed file in the drop-down
+                    document.getElementById('fileDropdown').value = newFileName;
+
+                    alert('File renamed successfully!');
+                }
+            }
+        }
+        function getRecentlyLoggedInUser() {
+            var recentlyLoggedInUser = JSON.parse(localStorage.getItem('recentlyLoggedInUser')) || null;
+            return recentlyLoggedInUser ? recentlyLoggedInUser.username : null;
+        }
+        console.log(getRecentlyLoggedInUser());
+    
+        function applyStyle(style) {
+            document.execCommand(style, false, null);
+        }
+        function changeFont() {
+            var selectedFont = document.getElementById('fontDropdown').value;
+            document.getElementById('editor').style.fontFamily = selectedFont;
+        }
+        function changeTextColor() {
+            var selectedColor = document.getElementById('colorDropdown').value;
+            document.execCommand('foreColor', false, selectedColor);
+        }
+        
+        function logout() {
+            // Clear any user-related data
+            localStorage.removeItem('recentlyLoggedInUser');
+
+            // Redirect to tem1.html
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
